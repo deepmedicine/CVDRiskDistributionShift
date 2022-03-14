@@ -1,0 +1,55 @@
+env_params:
+  gpus: 2
+  accelerator: ddp
+  accumulate_grad_batches: 4
+  max_epochs: 100
+  check_val_every_n_epoch: 2
+  log_every_n_steps: 50
+  num_sanity_val_steps: 30
+callback_params:
+  modelCheckpoint:
+    monitor: auroc
+    mode: max
+    save_top_k: 1
+    save_last: true
+    filename: save_ckpt
+  plug_in:
+    callback.ValidAurocAuprc: {}
+base_params:
+  dataloader: BEHRTDataLoader
+  dataloader_params:
+    token_dict_path: ./dict4code
+    age_dict_path: ./dict4age
+    max_seq_length: 512
+  model: Behrt
+  model_params:
+    seg_vocab_size: 2
+    hidden_size: 256
+    hidden_dropout_prob: 0.2
+    attention_probs_dropout_prob: 0.2
+    num_attention_heads: 8
+    intermediate_size: 512
+    hidden_act: gelu
+    aggregator_num_layer: 6
+    initializer_range: 0.02
+    optimiser: Adam
+    lr_strategy: fixed
+    scheduler: {'warmup_epochs': 10, 'hold_epochs': 40, 'max_epochs': 100, 'eta_min': 0.00001}
+    optimiser_params: {'lr': 0.005, 'weight_decay': 0.01, 'warmup_proportion': 0.1}
+    checkpoint_feature: null
+    embedding_only: false
+train_params:
+  data_path: ./BEHRT.parquet
+  eval_path: ./test.parquet
+  join_demographics: true
+  demographics: ./cohort.parquet
+  mode: train
+  type: random
+  year_train: 2000
+  year_test: {'start': 1999, 'end': 2000}
+  test_ratio: 0.3
+  random_state: 0
+  batch_size: 32
+  num_workers: 3
+  sampler: false
+  shuffle: true
